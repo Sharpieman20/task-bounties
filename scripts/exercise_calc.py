@@ -1,3 +1,10 @@
+'''
+
+
+Author: Sharpieman20
+For: Friktion Labs
+'''
+
 import asyncio
 import websockets
 import requests
@@ -41,7 +48,7 @@ def compute_realized_vols(coins):
         sample = pd.DataFrame(data, columns=['time', 'open', 'high', 'low', 'close', 'volume'])
         result_dict[symbol] = np.sqrt(df.vol.sum()*1/(4*10*np.log(2)))*np.sqrt(365)*100
     
-    coin_result_dict = {coin:result_dict[sym] for sym, coin in symbols_to_coins.items()}
+    coin_result_dict = {coin.upper():result_dict[sym] for sym, coin in symbols_to_coins.items()}
 
     return coin_result_dict
 
@@ -108,22 +115,22 @@ class DeribitApi:
         res = self.call_api(msg)
         return res
 
-def get_relevant_option(options, strike, expiry_date, thresh=24*60*60*1):
+def get_relevant_option(options, volt_entry, thresh=24*60*60*1):
     min_expiry_time_diff = 999999999999
     best_option = None
     seconds_threshold = thresh
     min_strike_diff = 99999999999
     for option in options:
-        expiry_time_diff = expiry_date.timestamp() - (option['expiration_timestamp']/1000)
-        if not option['option_type'] == 'call':
+        expiry_time_diff = volt_entry['expiry'].timestamp() - (option['expiration_timestamp']/1000)
+        if not option['option_type'] == volt_entry['side']:
             continue
         if abs(expiry_time_diff) < seconds_threshold:
-            strike_diff = strike - option['strike']
+            strike_diff = volt_entry['strike'] - option['strike']
             if abs(strike_diff) < min_strike_diff:
                 min_strike_diff = abs(strike_diff)
                 best_option = option
     if best_option is None:
-        return get_relevant_option(options, strike, expiry_date, thresh*2)
+        return get_relevant_option(options, volt_entry['strike'], volt_entry['expiry'], thresh*2)
     return best_option
 
 class WrappedCoinGecko(CoinGeckoAPI):
@@ -157,14 +164,18 @@ def d2(S,K,T,r,sigma):
 def bs_call(S,K,T,r,sigma):
     return S*norm.cdf(d1(S,K,T,r,sigma))-K*exp(-r*T)*norm.cdf(d2(S,K,T,r,sigma))
 
-def get_option_expiry_chance(cur_price, strike_price, expiry_time, iv):
+def get_option_exercise_chance(cur_price, volt_entry, iv):
+    strike_price = volt_entry['strike']
+    expiry_time = volt_entry['expiry']
     time_until_expiry_days = (expiry_time.timestamp()-time.time())/(60*60*24)
     time_until_expiry_days /= 365
     adj_iv = (iv/100.0)
     frac = 0.04
-    expiry_chance = norm.cdf(d1(cur_price, strike_price, time_until_expiry_days, frac, adj_iv))
+    exercise_chance = norm.cdf(d1(cur_price, strike_price, time_until_expiry_days, frac, adj_iv))
+    if volt_entry['side'] == 'put':
+        exercise_chance = 1 - exercise_chance
 
-    return expiry_chance
+    return exercise_chance
 
 def scrape_live_prices(cg, coins, currency):
     coin_prices_dict = {}
@@ -197,6 +208,13 @@ def main(args):
 
     entry_list = get_entry_dict(input_set)
 
+    entries_by_side_and_coin = {'call': {}, 'put': {}}
+    for entry in entry_list:
+        if entry['side'] == 'call':
+            entries_by_side_and_coin['call'][entry['coin']] = entry
+        else:
+            entries_by_side_and_coin['put'][entry['coin']] = entry
+
     my_coins = list(entry['coin'] for entry in entry_list)
 
     all_coins = cg.get_coins_list()
@@ -210,27 +228,30 @@ def main(args):
     
     main_coins = ['BTC', 'ETH']
 
-    main_loop(cg, deribit, coin_info, main_coins, entry_list, args.delay*60)
+    main_loop(cg, deribit, coin_info, main_coins, entries_by_side_and_coin, args.delay*60)
 
-def main_loop(cg, deribit, coin_info, main_coins, entry_list, delay):
+def main_loop(cg, deribit, coin_info, main_coins, entries_by_side_and_coin, delay):
     while True:
-        realized_vols = compute_realized_vols(coin['symbol'] for coin in coin_info)
-        live_prices = scrape_live_prices(cg, coin_info, 'usd')
-        main_ivs = {}
-        for coin in main_coins:
-            all_options = json.loads(deribit.get_listed_options(coin))
-            relevant_option = get_relevant_option(all_options['result'], my_strikes[coin], my_expiries[coin])
-            last_trade = deribit.get_price(relevant_option['instrument_name'])
-            relevant_option['price'] = json.loads(last_trade)['result']['trades'][0]['price']
-            relevant_option['iv'] = json.loads(last_trade)['result']['trades'][0]['iv']
-            main_ivs[coin] = relevant_option['iv']
-        for coin in entry_list:
-            my_rv = realized_vols[coin]
-            maincoin_rv = realized_vols[main_coins[0]]
-            my_ratio = my_rv / maincoin_rv
-            my_iv = my_ratio * main_ivs[main_coins[0]]
-            my_expiry_chance = get_option_expiry_chance(live_prices[coin], my_strikes[coin], my_expiries[coin], my_iv)
-            print(f'{coin} {my_expiry_chance}')
+        for side in ['call', 'put']:
+            entries_by_coin = entries_by_side_and_coin[side]
+            realized_vols = compute_realized_vols(coin['symbol'] for coin in coin_info)
+            live_prices = scrape_live_prices(cg, coin_info, 'usd')
+            main_ivs = {}
+            for coin in main_coins:
+                all_options = json.loads(deribit.get_listed_options(coin))
+                relevant_option = get_relevant_option(all_options['result'], entries_by_coin[coin])
+                last_trade = deribit.get_price(relevant_option['instrument_name'])
+                relevant_option['price'] = json.loads(last_trade)['result']['trades'][0]['price']
+                relevant_option['iv'] = json.loads(last_trade)['result']['trades'][0]['iv']
+                main_ivs[coin] = relevant_option['iv']
+            for coin in entries_by_coin.keys():
+                my_rv = realized_vols[coin]
+                maincoin_rv = realized_vols[main_coins[0]]
+                my_ratio = my_rv / maincoin_rv
+                my_iv = my_ratio * main_ivs[main_coins[0]]
+                my_exercise_chance = get_option_exercise_chance(live_prices[coin], entries_by_coin[coin], my_iv)
+                print(f'{coin} {side} {my_exercise_chance}')
+            print()
         time.sleep(delay)
 
 if __name__ == '__main__':

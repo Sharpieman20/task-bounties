@@ -12,7 +12,40 @@
     },
     {
         "globalId": "mainnet_income_call_marinade",
-        "product": "mSOL-127-CALL-1650592799",
+        "product": "BTC-44500-CALL-1650592799",
+        "startEpoch": 1649987999,
+        "endEpoch": 1650592799,
+        "balanceStart": 91291.0,
+        "balancePnl": 389.81,
+        "realizedPnl": 389.81,
+        "spotPriceAtEnd": 105.5,
+        "explorerLink": "https://solscan.io/tx/26S1HZCZaQjadd4UGMP7LcHJ7gWvXamjjJ2bYRj1C1gToA35EYVh9S89fzCd6XuemSYGaAvLXjpXySERvw95prVz"
+    },
+    {
+        "globalId": "mainnet_income_put_marinade",
+        "product": "BTC-35000-PUT-1650592799",
+        "startEpoch": 1649987999,
+        "endEpoch": 1650592799,
+        "balanceStart": 91291.0,
+        "balancePnl": 389.81,
+        "realizedPnl": 389.81,
+        "spotPriceAtEnd": 105.5,
+        "explorerLink": "https://solscan.io/tx/26S1HZCZaQjadd4UGMP7LcHJ7gWvXamjjJ2bYRj1C1gToA35EYVh9S89fzCd6XuemSYGaAvLXjpXySERvw95prVz"
+    },
+    {
+        "globalId": "mainnet_income_call_marinade",
+        "product": "ETH-3400-CALL-1650592799",
+        "startEpoch": 1649987999,
+        "endEpoch": 1650592799,
+        "balanceStart": 91291.0,
+        "balancePnl": 389.81,
+        "realizedPnl": 389.81,
+        "spotPriceAtEnd": 105.5,
+        "explorerLink": "https://solscan.io/tx/26S1HZCZaQjadd4UGMP7LcHJ7gWvXamjjJ2bYRj1C1gToA35EYVh9S89fzCd6XuemSYGaAvLXjpXySERvw95prVz"
+    },
+    {
+        "globalId": "mainnet_income_call_marinade",
+        "product": "ETH-2650-PUT-1650592799",
         "startEpoch": 1649987999,
         "endEpoch": 1650592799,
         "balanceStart": 91291.0,
