@@ -11,7 +11,7 @@
         "explorerLink": "https://solscan.io/tx/3aVphv4gs9GzNrytQxRp6beDQJ1Csjv7fnYTVHUMtUt4tEeWPn1yQnJ2Y81xvQaBHqK1jYA1S1CkSXa2Mbb4GkfH"
     },
     {
-        "globalId": "mainnet_income_call_marinade",
+        "globalId": "mainnet_income_call_btc",
         "product": "BTC-44500-CALL-1650592799",
         "startEpoch": 1649987999,
         "endEpoch": 1650592799,
@@ -22,7 +22,7 @@
         "explorerLink": "https://solscan.io/tx/26S1HZCZaQjadd4UGMP7LcHJ7gWvXamjjJ2bYRj1C1gToA35EYVh9S89fzCd6XuemSYGaAvLXjpXySERvw95prVz"
     },
     {
-        "globalId": "mainnet_income_put_marinade",
+        "globalId": "mainnet_income_put_btc",
         "product": "BTC-35000-PUT-1650592799",
         "startEpoch": 1649987999,
         "endEpoch": 1650592799,
@@ -33,7 +33,7 @@
         "explorerLink": "https://solscan.io/tx/26S1HZCZaQjadd4UGMP7LcHJ7gWvXamjjJ2bYRj1C1gToA35EYVh9S89fzCd6XuemSYGaAvLXjpXySERvw95prVz"
     },
     {
-        "globalId": "mainnet_income_call_marinade",
+        "globalId": "mainnet_income_call_eth",
         "product": "ETH-3400-CALL-1650592799",
         "startEpoch": 1649987999,
         "endEpoch": 1650592799,
@@ -44,7 +44,7 @@
         "explorerLink": "https://solscan.io/tx/26S1HZCZaQjadd4UGMP7LcHJ7gWvXamjjJ2bYRj1C1gToA35EYVh9S89fzCd6XuemSYGaAvLXjpXySERvw95prVz"
     },
     {
-        "globalId": "mainnet_income_call_marinade",
+        "globalId": "mainnet_income_put_eth",
         "product": "ETH-2650-PUT-1650592799",
         "startEpoch": 1649987999,
         "endEpoch": 1650592799,

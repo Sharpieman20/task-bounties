@@ -190,6 +190,7 @@ def scrape_live_prices(cg, coins, currency):
 def get_info_for_entry(entry):
     match_info = re.fullmatch('^([^-]+)-(\D+?)?-?(\d+)-(\D+)-(\d+)$', entry['product'])
     entry_info = {
+        'id': entry['globalId'],
         'coin': match_info[1],
         'strike': float(match_info[3]),
         'side': match_info[4].lower(),
@@ -232,11 +233,13 @@ def main(args):
 
 def main_loop(cg, deribit, coin_info, main_coins, entries_by_side_and_coin, delay):
     while True:
+        result_dict = {}
         for side in ['call', 'put']:
             entries_by_coin = entries_by_side_and_coin[side]
             realized_vols = compute_realized_vols(coin['symbol'] for coin in coin_info)
             live_prices = scrape_live_prices(cg, coin_info, 'usd')
             main_ivs = {}
+            
             for coin in main_coins:
                 all_options = json.loads(deribit.get_listed_options(coin))
                 relevant_option = get_relevant_option(all_options['result'], entries_by_coin[coin])
@@ -250,8 +253,10 @@ def main_loop(cg, deribit, coin_info, main_coins, entries_by_side_and_coin, dela
                 my_ratio = my_rv / maincoin_rv
                 my_iv = my_ratio * main_ivs[main_coins[0]]
                 my_exercise_chance = get_option_exercise_chance(live_prices[coin], entries_by_coin[coin], my_iv)
-                print(f'{coin} {side} {my_exercise_chance}')
-            print()
+                result_dict[entries_by_coin[coin]['id']] = my_exercise_chance
+        with (Path.cwd() / 'output.json').open('w') as output_fil:
+            json.dump(result_dict, output_fil)
+            print('Loop')
         time.sleep(delay)
 
 if __name__ == '__main__':
