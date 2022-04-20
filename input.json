@@ -1,0 +1,24 @@
+[
+    {
+        "globalId": "mainnet_income_put_tsUSDC",
+        "product": "SOL-tsUSDC-80-PUT-1650592799",
+        "startEpoch": 1649987999,
+        "endEpoch": 1650592799,
+        "balanceStart": 297760.0,
+        "balancePnl": 744.4,
+        "realizedPnl": 744.4,
+        "spotPriceAtEnd": 101.7,
+        "explorerLink": "https://solscan.io/tx/3aVphv4gs9GzNrytQxRp6beDQJ1Csjv7fnYTVHUMtUt4tEeWPn1yQnJ2Y81xvQaBHqK1jYA1S1CkSXa2Mbb4GkfH"
+    },
+    {
+        "globalId": "mainnet_income_call_marinade",
+        "product": "mSOL-127-CALL-1650592799",
+        "startEpoch": 1649987999,
+        "endEpoch": 1650592799,
+        "balanceStart": 91291.0,
+        "balancePnl": 389.81,
+        "realizedPnl": 389.81,
+        "spotPriceAtEnd": 105.5,
+        "explorerLink": "https://solscan.io/tx/26S1HZCZaQjadd4UGMP7LcHJ7gWvXamjjJ2bYRj1C1gToA35EYVh9S89fzCd6XuemSYGaAvLXjpXySERvw95prVz"
+    }
+]

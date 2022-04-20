@@ -13,6 +13,7 @@ from datetime import datetime, timedelta
 from pycoingecko import CoinGeckoAPI
 from scipy.stats import norm
 from math import log, sqrt, pi, exp
+import re
 
 def compute_realized_vols(coins):
     symbols_to_coins = {f'{coin}/USD':coin for coin in coins}
@@ -175,33 +176,28 @@ def scrape_live_prices(cg, coins, currency):
         coin_prices_dict[coin['symbol'].upper()] = price_in_currency
     return coin_prices_dict
 
-def get_friktion_strikes():
-    friktion_strike_dict = {
-        'BTC': 44500,
-        'ETH': 3400,
-        'SOL': 123
+def get_info_for_entry(entry):
+    match_info = re.fullmatch('^([^-]+)-(\D+?)?-?(\d+)-(\D+)-(\d+)$', entry['product'])
+    entry_info = {
+        'coin': match_info[1],
+        'strike': float(match_info[3]),
+        'side': match_info[4].lower(),
+        'expiry': datetime.fromtimestamp(int(match_info[5]))
     }
-    return friktion_strike_dict
+    return entry_info
 
-def get_friktion_expiries():
-    friktion_expiries = {
-        'BTC': '2022-04-22',
-        'ETH': '2022-04-22',
-        'SOL': '2022-04-22'
-    }
-    parsed_expiries = {}
-    for key in friktion_expiries.keys():
-        parsed_expiries[key] = datetime.strptime(friktion_expiries[key], '%Y-%m-%d')
-    return parsed_expiries
+def get_entry_dict(input_set):
+    return [get_info_for_entry(x) for x in input_set]
 
-def main_loop():
+def main(args):
+    input_set = json.load((Path.cwd() / 'input.json').open())
+
     cg = WrappedCoinGecko()
     deribit = DeribitApi()
 
-    my_strikes = get_friktion_strikes()
-    my_expiries = get_friktion_expiries()
+    entry_list = get_entry_dict(input_set)
 
-    my_coins = list(my_strikes.keys())
+    my_coins = list(entry['coin'] for entry in entry_list)
 
     all_coins = cg.get_coins_list()
 
@@ -213,10 +209,12 @@ def main_loop():
             my_coins.remove(coin_dict['symbol'].upper())
     
     main_coins = ['BTC', 'ETH']
-    
+
+    main_loop(cg, deribit, coin_info, main_coins, entry_list, args.delay*60)
+
+def main_loop(cg, deribit, coin_info, main_coins, entry_list, delay):
     while True:
-        coins = my_strikes.keys()
-        realized_vols = compute_realized_vols(my_strikes.keys())
+        realized_vols = compute_realized_vols(coin['symbol'] for coin in coin_info)
         live_prices = scrape_live_prices(cg, coin_info, 'usd')
         main_ivs = {}
         for coin in main_coins:
@@ -226,23 +224,21 @@ def main_loop():
             relevant_option['price'] = json.loads(last_trade)['result']['trades'][0]['price']
             relevant_option['iv'] = json.loads(last_trade)['result']['trades'][0]['iv']
             main_ivs[coin] = relevant_option['iv']
-        for coin in coins:
+        for coin in entry_list:
             my_rv = realized_vols[coin]
             maincoin_rv = realized_vols[main_coins[0]]
             my_ratio = my_rv / maincoin_rv
             my_iv = my_ratio * main_ivs[main_coins[0]]
             my_expiry_chance = get_option_expiry_chance(live_prices[coin], my_strikes[coin], my_expiries[coin], my_iv)
             print(f'{coin} {my_expiry_chance}')
-        print()
-
-        time.sleep(10)
+        time.sleep(delay)
 
 if __name__ == '__main__':
 
     parser = argparse.ArgumentParser()
 
-    parser.add_argument('--delay', type=float, help=f'time in minutes between updates')
+    parser.add_argument('--delay', type=float, help=f'time in minutes between updates', default=0.01)
 
     args = parser.parse_args()
 
-    main_loop()
+    main(args)
